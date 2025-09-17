@@ -14,6 +14,34 @@ std::string set_string_path(std::string* temp_string, std::string msg){
     return *temp_string;
 }
 
+size_t get_size_file_string(std::stringstream _buffer){
+    std::string buffer_string = _buffer.str();
+    size_t buffer_weight = buffer_string.length();
+    return buffer_weight;
+}
+
+void write_in_big_file(std::string file_name_read, std::string file_name_write){
+    std::ifstream file (file_name_read);
+    std::ifstream file_write (file_name_write);
+
+    if (!file.is_open()){return;}
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    
+    file.close();
+    size_t size_buffer_string;
+    size_buffer_string = get_size_file_string(buffer);
+    std::cout << size_buffer_string << std::endl;
+    // if (!file_write.is_open()) {return;}
+
+    // std::fstream:write(buffer);
+
+    return;
+    
+}
+
+
 /**
  * @brief класс для парсинга
  * @details private: имя файла,rexex для каждого типа выражений, списки для хранения строк с вхождением выражений
