@@ -7,11 +7,9 @@ uint64_t lines_count(std::filesystem::path _path, uint64_t _size);
 struct f_info
 {
     std::filesystem::path _path;
-    //uint64_t _lines_count;
     uint64_t _size_bytes;
     
     f_info (std::filesystem::path _PATH,
-            //size_t _CL, 
             uint64_t _SB): _path (_PATH), _size_bytes (_SB)
     {}
     void update_info(){
@@ -23,14 +21,12 @@ struct f_info
             return;
         }
         this->_size_bytes = std::filesystem::file_size(_path);
-        //this->_lines_count = lines_count(_path, _size_bytes);
         std::cout<<"___________________________\n";
         print_info();
         return; 
     }
     void print_info(){
     std::cout<< "___ PRINT_INFO "<< this->_path<< " ____\n";
-    //std::cout << "Lines count: " << this->_lines_count << "\n";
     std::cout << "Size file (bytes): " << this->_size_bytes <<"\n";
     std::cout<<"___________________________\n";
     return;

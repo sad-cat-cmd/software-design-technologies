@@ -1,11 +1,5 @@
 #include <chrono>
 
-// struct run_time
-// {
-//     start_time;
-//     start_end;
-// };
-
 class time_interval{
     private:
     std::chrono::time_point<std::chrono::high_resolution_clock> _start;
