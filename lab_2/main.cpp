@@ -1,5 +1,7 @@
 // 10 вариант
 #include <iostream>
+#include "work_with_file.hpp"
+#include "time.hpp"
 #include "parsing.hpp"
 
 // f_info *test_html = _create_file_in_dir("dir_files_html", "test.hmtl");
@@ -27,10 +29,10 @@ int main(){
     f_info *buffer_html = _create_file_in_dir("dir_files_html", vec_files_name[2]);
 
     write_buf_in_file(little_html, get_buffer_from_file(buffer_html), 1024*1024); // 1mb
-    write_buf_in_file(big_html, get_buffer_from_file(buffer_html), 1024 * 1024 * 1024); // 17гб
+    write_buf_in_file(big_html, get_buffer_from_file(buffer_html), 1024 * 1024 * 200); // 1гб
     
     PARSING little_file(little_html, vec_str_regex);
-    //PARSING big_file(big_html, vec_str_regex);
+    PARSING big_file(big_html, vec_str_regex);
     // write_in_big_file(file_path_in_little, file_path_in_big);
 
     return 0;

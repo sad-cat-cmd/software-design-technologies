@@ -1,37 +1,27 @@
-#include <fstream>
-#include <filesystem>
-#include <vector>
+#include "work_with_file.hpp"
+#include "time.hpp"
+#include "parsing.hpp"
 
-uint64_t lines_count(std::filesystem::path _path, uint64_t _size);
-
-struct f_info
-{
-    std::filesystem::path _path;
-    uint64_t _size_bytes;
-    
-    f_info (std::filesystem::path _PATH,
-            uint64_t _SB): _path (_PATH), _size_bytes (_SB)
-    {}
-    void update_info(){
-        std::cout <<"____ UPDATES F_INFO :/" << _path << "____\n";
-        time_interval timer_f("f_info Updates: ");
-        if (_size_bytes == std::filesystem::file_size(_path)) {
-            std::cout<<"___________________________\n";
-            print_info();
-            return;
-        }
-        this->_size_bytes = std::filesystem::file_size(_path);
+void f_info::update_info(){
+    std::cout <<"____ UPDATES F_INFO :/" << _path << "____\n";
+    time_interval timer_f("f_info Updates: ");
+    if (_size_bytes == std::filesystem::file_size(_path)) {
         std::cout<<"___________________________\n";
         print_info();
-        return; 
+        return;
     }
-    void print_info(){
+    this->_size_bytes = std::filesystem::file_size(_path);
+    std::cout<<"___________________________\n";
+    print_info();
+    return; 
+    }
+void f_info::print_info(){
     std::cout<< "___ PRINT_INFO "<< this->_path<< " ____\n";
     std::cout << "Size file (bytes): " << this->_size_bytes <<"\n";
     std::cout<<"___________________________\n";
     return;
 }
-};
+
 
 std::string get_buffer_from_file(f_info * _info){
     std::cout<< "___ GET BUFFER FROM FILE: "<< _info->_path<< " ____\n";
@@ -122,7 +112,10 @@ uint64_t lines_count(std::filesystem::path _path,
     }
     return lines_count;
 }
-
+f_info::f_info(std::filesystem::path _PATH, uint64_t _SB){
+    _path = _PATH;
+    _size_bytes = _SB;
+}
 f_info*_create_file_in_dir(std::filesystem::path _dir,
                            std::string_view _fname){
     time_interval _timer_f ("\t FILE and DIR CREATING/UPDATES: ");
@@ -164,4 +157,121 @@ f_info*_create_file_in_dir(std::filesystem::path _dir,
     }
 }
 
+time_interval::time_interval(std::string_view message = "Execution time: ")
+    : _start(std::chrono::high_resolution_clock::now()),
+      _message(message){}
+time_interval::~time_interval(){
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (end - _start);
+    if (duration < std::chrono::nanoseconds(1)) {
+    // < 1 ns
+        std::cout << _message << "0ns\n";
+    }
+    else if (duration < std::chrono::microseconds(1)) {
+        //ns
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+        std::cout << _message << ns.count() << "ns\n";
+    }
+    else if (duration < std::chrono::milliseconds(1)) {
+        // mks
+       auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+       std::cout << _message << us.count() << "μs\n";
+    }
+    else if (duration < std::chrono::seconds(1)) {
+            // ms
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        std::cout << _message << ms.count() << "ms\n";
+    }
+    else if (duration < std::chrono::minutes(1)) {
+        // s
+        auto s = std::chrono::duration_cast<std::chrono::seconds>(duration);
+        std::cout << _message << s.count() << "s\n";
+    }
+    else {
+        // m + 
+        auto min = std::chrono::duration_cast<std::chrono::minutes>(duration);
+        std::cout << _message << min.count() << "min\n";
+    }
+    std::cout<< "\n \n";
+}
 
+std::string set_string_path(std::string_view msg){
+    std::string temp_string;
+    std::cout << msg <<": ";
+    std::cin >> temp_string;
+    return temp_string;
+}
+
+void PARSING::search_and_collect(){
+    std::cout<< "___ PARSING: "<< INFO->_path<< " ____\n";
+    time_interval timer("search_and_collect: ");
+
+    std::ifstream file(INFO->_path, std::ios::binary);
+        
+    const size_t CHUNK_SIZE = 64 * 1024 * 1024;
+    std::vector<char> chunk_buffer(CHUNK_SIZE);
+    size_t bytes_read = 0;
+
+    while (file){
+        file.read(chunk_buffer.data(), CHUNK_SIZE);
+        bytes_read = file.gcount(); 
+
+        if (bytes_read == 0) break;
+
+        std::string buffer(chunk_buffer.data(), bytes_read);
+
+        auto begin = std::sregex_iterator(buffer.begin(), buffer.end(), _combined_regex);
+        auto end = std::sregex_iterator();
+
+        for (auto it = begin; it != end; it++){
+            std::smatch match = *it;
+            for (size_t i = 1; i < match.size(); i++){
+                if (match[i].matched){
+                    pattern_lists[i-1].push_back(match[0].str());
+                    break;
+                } 
+            }
+        }
+        }
+        file.close();
+        std::cout<<"___________________________\n";
+}
+    
+void PARSING::printAll() {
+    for (auto pattern_it = pattern_lists.cbegin(); pattern_it != pattern_lists.cend(); ++pattern_it) {
+        for (auto list_it = pattern_it->cbegin(); list_it != pattern_it->cend(); ++list_it) {
+           std::cout << *list_it << std::endl;
+        }
+    }
+}
+
+void PARSING::printStats() {
+    auto pattern_iter = pattern_lists.cbegin();
+    auto name_iter = _pattern_names.cbegin();
+
+    while (pattern_iter != pattern_lists.cend() && name_iter != _pattern_names.cend()) {
+    std::cout << "PATTERN '" << *name_iter << "': " 
+                  << pattern_iter->size() << " occurrences" << std::endl;
+    
+    ++pattern_iter;
+    ++name_iter;
+    }
+}
+
+PARSING::PARSING(f_info * _INFO,
+        std::vector<std::string> _patterns) 
+{
+    INFO = _INFO;
+    std::string _combined_pattern;
+    pattern_lists.resize(_patterns.size());
+    _pattern_names = _patterns;
+
+    for (size_t i = 0; i < _patterns.size(); i++) {
+        if (i > 0) _combined_pattern += "|";
+        _combined_pattern += "(" + _patterns[i] + ")";
+    }
+    _combined_regex = std::regex(_combined_pattern, std::regex::optimize);
+    search_and_collect();
+    printStats();
+    //printAll();
+}  
