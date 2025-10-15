@@ -1,8 +1,6 @@
-#include "work_with_file.hpp"
-#include "time.hpp"
-#include "parsing.hpp"
-
-void f_info::update_info(){
+#include "general_header.hpp"
+#include <iostream>
+void f_info::update_info() noexcept {
     std::cout <<"____ UPDATES F_INFO :/" << _path << "____\n";
     time_interval timer_f("f_info Updates: ");
     if (_size_bytes == std::filesystem::file_size(_path)) {
@@ -15,7 +13,7 @@ void f_info::update_info(){
     print_info();
     return; 
     }
-void f_info::print_info(){
+void f_info::print_info() noexcept {
     std::cout<< "___ PRINT_INFO "<< this->_path<< " ____\n";
     std::cout << "Size file (bytes): " << this->_size_bytes <<"\n";
     std::cout<<"___________________________\n";
@@ -24,6 +22,7 @@ void f_info::print_info(){
 
 
 std::string get_buffer_from_file(f_info * _info){
+    if (_info == NULL ) throw "file ptr is zero\n";
     std::cout<< "___ GET BUFFER FROM FILE: "<< _info->_path<< " ____\n";
     time_interval timer("get_buffer_from_file: ");
     std::ifstream file(_info->_path, std::ios::binary);
@@ -44,6 +43,7 @@ std::string get_buffer_from_file(f_info * _info){
 void write_buf_in_file(f_info * _info,
                        std::string_view buffer,
                        size_t target_size){
+    if (_info == NULL) throw "file_ptr is zero\n";
     std::cout<< "___ WRITE IN FILE: /"<< _info->_path<< " ____\n";
     time_interval timer("write buffer in file: ");
     std::ofstream file(_info->_path, std::ios::binary);
@@ -201,77 +201,3 @@ std::string set_string_path(std::string_view msg){
     std::cin >> temp_string;
     return temp_string;
 }
-
-void PARSING::search_and_collect(){
-    std::cout<< "___ PARSING: "<< INFO->_path<< " ____\n";
-    time_interval timer("search_and_collect: ");
-
-    std::ifstream file(INFO->_path, std::ios::binary);
-        
-    const size_t CHUNK_SIZE = 64 * 1024 * 1024;
-    std::vector<char> chunk_buffer(CHUNK_SIZE);
-    size_t bytes_read = 0;
-
-    while (file){
-        file.read(chunk_buffer.data(), CHUNK_SIZE);
-        bytes_read = file.gcount(); 
-
-        if (bytes_read == 0) break;
-
-        std::string buffer(chunk_buffer.data(), bytes_read);
-
-        auto begin = std::sregex_iterator(buffer.begin(), buffer.end(), _combined_regex);
-        auto end = std::sregex_iterator();
-
-        for (auto it = begin; it != end; it++){
-            std::smatch match = *it;
-            for (size_t i = 1; i < match.size(); i++){
-                if (match[i].matched){
-                    pattern_lists[i-1].push_back(match[0].str());
-                    break;
-                } 
-            }
-        }
-        }
-        file.close();
-        std::cout<<"___________________________\n";
-}
-    
-void PARSING::printAll() {
-    for (auto pattern_it = pattern_lists.cbegin(); pattern_it != pattern_lists.cend(); ++pattern_it) {
-        for (auto list_it = pattern_it->cbegin(); list_it != pattern_it->cend(); ++list_it) {
-           std::cout << *list_it << std::endl;
-        }
-    }
-}
-
-void PARSING::printStats() {
-    auto pattern_iter = pattern_lists.cbegin();
-    auto name_iter = _pattern_names.cbegin();
-
-    while (pattern_iter != pattern_lists.cend() && name_iter != _pattern_names.cend()) {
-    std::cout << "PATTERN '" << *name_iter << "': " 
-                  << pattern_iter->size() << " occurrences" << std::endl;
-    
-    ++pattern_iter;
-    ++name_iter;
-    }
-}
-
-PARSING::PARSING(f_info * _INFO,
-        std::vector<std::string> _patterns) 
-{
-    INFO = _INFO;
-    std::string _combined_pattern;
-    pattern_lists.resize(_patterns.size());
-    _pattern_names = _patterns;
-
-    for (size_t i = 0; i < _patterns.size(); i++) {
-        if (i > 0) _combined_pattern += "|";
-        _combined_pattern += "(" + _patterns[i] + ")";
-    }
-    _combined_regex = std::regex(_combined_pattern, std::regex::optimize);
-    search_and_collect();
-    printStats();
-    //printAll();
-}  
