@@ -60,7 +60,9 @@ void PARSING::printStats() {
 PARSING::PARSING(f_info * _INFO,
         std::vector<std::string> _patterns) 
 {
-    if (_INFO == NULL ) throw "file ptr is zero\n";
+    if (_INFO == NULL ) {
+        return;
+    }
     INFO = _INFO;
     std::string _combined_pattern;
     pattern_lists.resize(_patterns.size());
@@ -79,31 +81,16 @@ PARSING::PARSING(f_info * _INFO,
 extern "C" {
 
 PARSING* create_parser(f_info* info, const char** patterns, int count) {
-    try {
-        std::vector<std::string> pattern_vec;
-        for (int i = 0; i < count; ++i) {
-            if (patterns[i] != nullptr) {
-                pattern_vec.push_back(patterns[i]);
-            }
+    std::vector<std::string> pattern_vec;
+    for (int i = 0; i < count; ++i) {
+        if (patterns[i] != nullptr) {
+            pattern_vec.push_back(patterns[i]);
         }
+    }
+    std::cout << "Creating parser for file: " << info->_path << std::endl;
+    std::cout << "Patterns count: " << pattern_vec.size() << std::endl;
         
-        std::cout << "Creating parser for file: " << info->_path << std::endl;
-        std::cout << "Patterns count: " << pattern_vec.size() << std::endl;
-        
-        return new PARSING(info, pattern_vec);
-    }
-    catch (const char* error_msg) {
-        std::cerr << "Error in create_parser: " << error_msg << std::endl;
-        return nullptr;
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Exception in create_parser: " << e.what() << std::endl;
-        return nullptr;
-    }
-    catch (...) {
-        std::cerr << "Unknown error in create_parser" << std::endl;
-        return nullptr;
-    }
+    return new PARSING(info, pattern_vec);
 }
 
 void destroy_parser(PARSING* parser) {
@@ -139,5 +126,4 @@ void parser_print_stats(PARSING* parser) {
         std::cerr << "Error: parser is null in parser_print_stats" << std::endl;
     }
 }
-
 }

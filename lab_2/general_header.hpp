@@ -1,12 +1,23 @@
 #ifndef WORK_FILE_HPP
 #define WORK_FILE_HPP
 
+#include <exception>
 #include <vector>
 #include <list>
 #include <regex>
 #include <fstream>
 #include <chrono>
 #include <filesystem>
+
+class EXEP_work_file : public std::exception {
+    private:
+    int data_state;
+    std::string message;
+    public:
+    EXEP_work_file(std::string _message, int _data_state);
+    int getDataState();
+    std::string getMessage();
+};
 
 uint64_t lines_count(std::filesystem::path _path, uint64_t _size);
 

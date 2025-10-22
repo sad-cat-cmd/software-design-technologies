@@ -3,10 +3,9 @@
 #include <dlfcn.h>
 #include "general_header.hpp"
 
-
 typedef PARSING* (*create_parser_t)(f_info*, const char**, int);
 typedef void (*destroy_parser_t)(PARSING*);
-typedef void (*parser_search_t)(PARSING*);        // ДОБАВЬТЕ ЭТО
+typedef void (*parser_search_t)(PARSING*);
 typedef void (*parser_print_all_t)(PARSING*);
 
 int main(){
@@ -45,11 +44,21 @@ int main(){
     f_info *big_html = _create_file_in_dir("dir_files_html", vec_files_name[1]);
     f_info *buffer_html = _create_file_in_dir("dir_files_html", vec_files_name[2]);
 
-    try{write_buf_in_file(little_html, get_buffer_from_file(buffer_html), 1024*1024);}
-    catch(const char* error_message){std::cout << error_message << "\n";}
+    try{
+        write_buf_in_file(little_html, get_buffer_from_file(buffer_html), 1024*1024);
+    }
+    catch(EXEP_work_file &ex){
+        std::cout << "Write_buf_in file #_" << ex.what() << "#_"<< ex.getMessage() << "#_"<< ex.getDataState() << std::endl;
+        return 1;   
+    }
 
-    try{write_buf_in_file(big_html, get_buffer_from_file(buffer_html), 1024 * 1024 * 200);}
-    catch (const char* error_message) {std::cout << error_message <<"\n";} // 1гб
+    try{
+        write_buf_in_file(big_html, get_buffer_from_file(buffer_html), 1024 * 1024 * 200);
+    }
+    catch (EXEP_work_file &ex) {
+        std::cout << "Write_buf_in file #_" << ex.what() << "#_"<< ex.getMessage() << "#_"<< ex.getDataState() << std::endl;
+        return 1;
+    }
     
 
     // PARSING little_file(little_html, vec_str_regex);

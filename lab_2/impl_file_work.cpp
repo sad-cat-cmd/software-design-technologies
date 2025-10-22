@@ -1,5 +1,13 @@
 #include "general_header.hpp"
 #include <iostream>
+
+EXEP_work_file::EXEP_work_file(std::string _message, int _data_state){
+    data_state = _data_state;
+    message = _message;
+}
+int EXEP_work_file::getDataState() {return data_state;}
+std::string EXEP_work_file::getMessage() {return message;}
+
 void f_info::update_info() noexcept {
     std::cout <<"____ UPDATES F_INFO :/" << _path << "____\n";
     time_interval timer_f("f_info Updates: ");
@@ -20,15 +28,18 @@ void f_info::print_info() noexcept {
     return;
 }
 
-
 std::string get_buffer_from_file(f_info * _info){
-    if (_info == NULL ) throw "file ptr is zero\n";
+    if (_info == NULL ){
+        throw EXEP_work_file("file_ptr is NULL", 0);
+        return "";
+    }
     std::cout<< "___ GET BUFFER FROM FILE: "<< _info->_path<< " ____\n";
     time_interval timer("get_buffer_from_file: ");
     std::ifstream file(_info->_path, std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "file is not open: "<< _info->_path.string() << "\n";
-        std::cout<<"___________________________\n";
+        throw EXEP_work_file("file is not open:" + _info->_path.string(), 1);
+        //std::cout << "file is not open: "<< _info->_path.string() << "\n";
+        //std::cout<<"___________________________\n";
         return "";
     }
     std::string buffer;
@@ -40,29 +51,33 @@ std::string get_buffer_from_file(f_info * _info){
     return buffer;
 }
 
-void write_buf_in_file(f_info * _info,
-                       std::string_view buffer,
-                       size_t target_size){
-    if (_info == NULL) throw "file_ptr is zero\n";
+void write_buf_in_file(f_info * _info, std::string_view buffer, size_t target_size){
+    if (_info == NULL) {
+        throw EXEP_work_file("file_ptr is NULL", 0);
+        return;
+    }
     std::cout<< "___ WRITE IN FILE: /"<< _info->_path<< " ____\n";
     time_interval timer("write buffer in file: ");
     std::ofstream file(_info->_path, std::ios::binary);
     if (buffer.empty()){
-        std::cout << "buffer is empty \n";
-        std::cout<<"___________________________\n";
+        throw EXEP_work_file("buffer is empty", 0);
+        // std::cout << "buffer is empty \n";
+        // std::cout<<"___________________________\n";
         file.close();
         return;
     }
     if (!file.is_open()) {
-        std::cout << "file is not open: " << _info->_path.string() << "\n";
-        std::cout<<"___________________________\n";
+        throw EXEP_work_file("file is not open:" + _info->_path.string(), 0);
+        // std::cout << "file is not open: " << _info->_path.string() << "\n";
+        // std::cout<<"___________________________\n";
         file.close();
         return;
     }
 
     if (_info->_size_bytes == target_size) {
-        std::cout<< "File's size = target_size \n";
-        std::cout<<"___________________________\n";
+        throw EXEP_work_file("File's size = target_size", 1);
+        // std::cout<< "File's size = target_size \n";
+        // std::cout<<"___________________________\n";
         return;
     }
     size_t buffer_size = buffer.size();
@@ -75,8 +90,9 @@ void write_buf_in_file(f_info * _info,
         total_written += to_write;
 
         if (!file) {
-            std::cout<< "Error write in file" << "\n";
-            std::cout<<"___________________________\n";
+            throw EXEP_work_file("Error write in file", 0);
+            // std::cout<< "Error write in file" << "\n";
+            // std::cout<<"___________________________\n";
             file.close();
             return;
         }
@@ -116,8 +132,7 @@ f_info::f_info(std::filesystem::path _PATH, uint64_t _SB){
     _path = _PATH;
     _size_bytes = _SB;
 }
-f_info*_create_file_in_dir(std::filesystem::path _dir,
-                           std::string_view _fname){
+f_info*_create_file_in_dir(std::filesystem::path _dir,std::string_view _fname){
     time_interval _timer_f ("\t FILE and DIR CREATING/UPDATES: ");
     std::cout<<"____ Directory Creating: /"<< _dir << "____\n";
     if (!std::filesystem::exists(_dir)){
