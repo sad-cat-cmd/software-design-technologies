@@ -1,5 +1,13 @@
 #include "general_header.hpp"
 #include <iostream>
+
+EXEP_work_file::EXEP_work_file(std::string _message, int _data_state){
+    data_state = _data_state;
+    message = _message;
+}
+int EXEP_work_file::getDataState() {return data_state;}
+std::string EXEP_work_file::getMessage() {return message;}
+
 void f_info::update_info() noexcept {
     std::cout <<"____ UPDATES F_INFO :/" << _path << "____\n";
     time_interval timer_f("f_info Updates: ");
@@ -12,7 +20,7 @@ void f_info::update_info() noexcept {
     std::cout<<"___________________________\n";
     print_info();
     return; 
-    }
+}
 void f_info::print_info() noexcept {
     std::cout<< "___ PRINT_INFO "<< this->_path<< " ____\n";
     std::cout << "Size file (bytes): " << this->_size_bytes <<"\n";
@@ -20,104 +28,81 @@ void f_info::print_info() noexcept {
     return;
 }
 
-
 std::string get_buffer_from_file(f_info * _info){
-    if (_info == NULL ) throw "file ptr is zero\n";
+    if (_info == NULL ){
+        throw EXEP_work_file("file_ptr is NULL", 0);
+    }
     std::cout<< "___ GET BUFFER FROM FILE: "<< _info->_path<< " ____\n";
     time_interval timer("get_buffer_from_file: ");
     std::ifstream file(_info->_path, std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "file is not open: "<< _info->_path.string() << "\n";
-        std::cout<<"___________________________\n";
-        return "";
+        throw EXEP_work_file("file is not open:" + _info->_path.string(), 1);
     }
     std::string buffer;
     file.seekg(0, std::ios::end);
     buffer.resize(file.tellg());
     file.seekg(0, std::ios::beg);
     file.read(buffer.data(), buffer.size());
+    file.close();
     std::cout<<"___________________________\n";
     return buffer;
 }
 
-void write_buf_in_file(f_info * _info,
-                       std::string_view buffer,
-                       size_t target_size){
-    if (_info == NULL) throw "file_ptr is zero\n";
+void write_buf_in_file(f_info * _info, std::string_view buffer, size_t target_size){
+    if (_info == NULL) {
+        throw EXEP_work_file("file_ptr is NULL", 0);
+    }
     std::cout<< "___ WRITE IN FILE: /"<< _info->_path<< " ____\n";
     time_interval timer("write buffer in file: ");
-    std::ofstream file(_info->_path, std::ios::binary);
     if (buffer.empty()){
-        std::cout << "buffer is empty \n";
-        std::cout<<"___________________________\n";
-        file.close();
+        throw EXEP_work_file("buffer is empty", 0);
+    }
+    size_t current_size = std::filesystem::file_size(_info->_path);
+    if (current_size == target_size) {
+        std::cout << "File already has target size: " << target_size << " bytes\n";
+        _info->update_info();
         return;
     }
+    std::ofstream file(_info->_path, std::ios::binary | std::ios::app);
     if (!file.is_open()) {
-        std::cout << "file is not open: " << _info->_path.string() << "\n";
-        std::cout<<"___________________________\n";
-        file.close();
-        return;
-    }
-
-    if (_info->_size_bytes == target_size) {
-        std::cout<< "File's size = target_size \n";
-        std::cout<<"___________________________\n";
-        return;
+        throw EXEP_work_file("file is not open:" + _info->_path.string(), 0);
     }
     size_t buffer_size = buffer.size();
     size_t total_written = 0;
-    while(total_written < target_size){
-        size_t remaining = target_size - total_written;
+    size_t needed_size = (current_size < target_size) ? target_size - current_size : 0;
+    if (current_size > target_size) {
+        file.close();
+        std::filesystem::resize_file(_info->_path, target_size);
+        std::cout << "File truncated to: " << target_size << " bytes\n";
+        _info->update_info();
+        return;
+    }
+    while(total_written < needed_size){
+        size_t remaining = needed_size - total_written;
         size_t to_write = std::min(remaining, buffer_size);
 
         file.write(buffer.data(), to_write);
         total_written += to_write;
 
         if (!file) {
-            std::cout<< "Error write in file" << "\n";
-            std::cout<<"___________________________\n";
             file.close();
-            return;
+            throw EXEP_work_file("Error write in file", 0);
         }
     }
-    std::cout << "Recorded: " << total_written << "  BYTES\n";
+
+    std::cout << "Recorded: " << total_written << " BYTES\n";
     std::cout << "Recording is over. UPDATES INFO\n";
+    file.close();
     _info->update_info();
     std::cout<<"___________________________\n";
-    file.close();
     return;
 }
 
-uint64_t lines_count(std::filesystem::path _path,
-                     uint64_t _size){
-    uint64_t lines_count = 0;
-    uint64_t total_read = 0;
-    std::ifstream file(_path, std::ios::binary);
-    const int size_buf = 1 * 1024 * 1024;
-    std::vector <char> buffer(size_buf);
-        
-    while (file){
-        file.read(buffer.data(), size_buf);
-        size_t bytes_read = file.gcount();
-        
-        if (bytes_read == 0) break;
-        
-        const char* data = buffer.data();
-        for (size_t i = 0; i < bytes_read; ++i) {
-            if (data[i] == '\n') {
-                lines_count++;
-            }
-        }
-    }
-    return lines_count;
-}
 f_info::f_info(std::filesystem::path _PATH, uint64_t _SB){
     _path = _PATH;
     _size_bytes = _SB;
 }
-f_info*_create_file_in_dir(std::filesystem::path _dir,
-                           std::string_view _fname){
+f_info*_create_file_in_dir(std::filesystem::path _dir,std::string_view _fname){
     time_interval _timer_f ("\t FILE and DIR CREATING/UPDATES: ");
     std::cout<<"____ Directory Creating: /"<< _dir << "____\n";
     if (!std::filesystem::exists(_dir)){
@@ -134,11 +119,8 @@ f_info*_create_file_in_dir(std::filesystem::path _dir,
 
     if (!std::filesystem::exists(_fpath)){
         std::ofstream _file (_fpath);
-        if (!_file.is_open()) {
-            std::cout<< "The file has not been created"<< _fpath << "\n";
-            std::cout<<"___________________________\n";
-            return nullptr;
-        }
+        if (!_file.is_open()) 
+            throw EXEP_work_file("file is not open:" + _fpath.string(), 1);
         else {
             std::cout<< "The file has been created " << _fpath << "\n ";
             _file.close();

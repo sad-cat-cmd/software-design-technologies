@@ -1,7 +1,17 @@
 #include "general_header.hpp"
 #include <iostream>
 
-void PARSING::search_and_collect(){
+#ifdef __GNUC__
+    #define EXPORT __attribute__((visibility("default")))
+    #define IMPORT
+    #define HIDDEN __attribute__((visibility("hidden")))
+#else
+    #define EXPORT
+    #define IMPORT  
+    #define HIDDEN
+#endif
+
+HIDDEN void PARSING::search_and_collect(){
     std::cout<< "___ PARSING: "<< INFO->_path<< " ____\n";
     time_interval timer("search_and_collect: ");
 
@@ -36,7 +46,7 @@ void PARSING::search_and_collect(){
         std::cout<<"___________________________\n";
 }
     
-void PARSING::printAll() {
+HIDDEN void PARSING::printAll() {
     for (auto pattern_it = pattern_lists.cbegin(); pattern_it != pattern_lists.cend(); ++pattern_it) {
         for (auto list_it = pattern_it->cbegin(); list_it != pattern_it->cend(); ++list_it) {
            std::cout << *list_it << std::endl;
@@ -44,7 +54,7 @@ void PARSING::printAll() {
     }
 }
 
-void PARSING::printStats() {
+HIDDEN void PARSING::printStats() {
     auto pattern_iter = pattern_lists.cbegin();
     auto name_iter = _pattern_names.cbegin();
 
@@ -57,10 +67,13 @@ void PARSING::printStats() {
     }
 }
 
-PARSING::PARSING(f_info * _INFO,
-        std::vector<std::string> _patterns) 
+HIDDEN PARSING::PARSING(f_info * _INFO,
+        std::vector<std::string> _patterns,
+        bool flag_print_all_info) 
 {
-    if (_INFO == NULL ) throw "file ptr is zero\n";
+    if (_INFO == NULL ) {
+        return;
+    }
     INFO = _INFO;
     std::string _combined_pattern;
     pattern_lists.resize(_patterns.size());
@@ -73,70 +86,26 @@ PARSING::PARSING(f_info * _INFO,
     _combined_regex = std::regex(_combined_pattern, std::regex::optimize);
     search_and_collect();
     printStats();
-    //printAll();
+    if (flag_print_all_info)
+        printAll();
 }  
 
 extern "C" {
 
-PARSING* create_parser(f_info* info, const char** patterns, int count) {
-    try {
-        std::vector<std::string> pattern_vec;
-        for (int i = 0; i < count; ++i) {
-            if (patterns[i] != nullptr) {
-                pattern_vec.push_back(patterns[i]);
-            }
+PARSING* create_parser(f_info* info, const char** patterns, int count, bool flag) {
+    std::vector<std::string> pattern_vec;
+    for (int i = 0; i < count; ++i) {
+        if (patterns[i] != nullptr) {
+            pattern_vec.push_back(patterns[i]);
         }
-        
-        std::cout << "Creating parser for file: " << info->_path << std::endl;
-        std::cout << "Patterns count: " << pattern_vec.size() << std::endl;
-        
-        return new PARSING(info, pattern_vec);
     }
-    catch (const char* error_msg) {
-        std::cerr << "Error in create_parser: " << error_msg << std::endl;
-        return nullptr;
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Exception in create_parser: " << e.what() << std::endl;
-        return nullptr;
-    }
-    catch (...) {
-        std::cerr << "Unknown error in create_parser" << std::endl;
-        return nullptr;
-    }
+    return new PARSING(info, pattern_vec, flag);
 }
 
 void destroy_parser(PARSING* parser) {
     if (parser) {
         delete parser;
         std::cout << "Parser destroyed successfully" << std::endl;
-    }
-}
-
-void parser_search(PARSING* parser) {
-    if (parser) {
-        std::cout << "Executing search_and_collect via C interface" << std::endl;
-        parser->search_and_collect();
-    } else {
-        std::cerr << "Error: parser is null in parser_search" << std::endl;
-    }
-}
-
-void parser_print_all(PARSING* parser) {
-    if (parser) {
-        std::cout << "Executing printAll via C interface" << std::endl;
-        parser->printAll();
-    } else {
-        std::cerr << "Error: parser is null in parser_print_all" << std::endl;
-    }
-}
-
-void parser_print_stats(PARSING* parser) {
-    if (parser) {
-        std::cout << "Executing printStats via C interface" << std::endl;
-        parser->printStats();
-    } else {
-        std::cerr << "Error: parser is null in parser_print_stats" << std::endl;
     }
 }
 

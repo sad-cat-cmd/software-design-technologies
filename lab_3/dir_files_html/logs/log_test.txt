@@ -1,0 +1,13 @@
+INFORMATION dir_files_html/test.html
+Size file (bytes):754
+
+
+dir_files_htmlhas already been created
+dir_files_html/test.html has been created
+
+
+___________________________
+GET BUFFER FROM FILE: dir_files_html/test.html
+ SIZE: 754
+___________________________
+

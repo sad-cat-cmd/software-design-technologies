@@ -1,12 +1,24 @@
 #ifndef WORK_FILE_HPP
 #define WORK_FILE_HPP
 
+#include <exception>
 #include <vector>
 #include <list>
 #include <regex>
 #include <fstream>
 #include <chrono>
 #include <filesystem>
+#include <cstring>
+
+class EXEP_work_file : public std::exception {
+    private:
+    int data_state;
+    std::string message;
+    public:
+    EXEP_work_file(std::string _message, int _data_state);
+    int getDataState();
+    std::string getMessage();
+};
 
 uint64_t lines_count(std::filesystem::path _path, uint64_t _size);
 
@@ -47,27 +59,23 @@ std::string set_string_path(std::string_view msg);
 
 class PARSING{
     private:
-    f_info* INFO;
+    size_t count_pattern = 0;
+    char** pattern_buffer;
+    std::string _fpath;
     std::regex _combined_regex;
-    std::vector<std::list<std::string>> pattern_lists;
+    std::vector <std::list<std::string>> pattern_lists;
     std::vector <std::string> _pattern_names;
-/**
- * @brief функция вывода контейнера std::list<std::string> на экран
- * @param _list - копия объекта типа std::list<std::string>
- * @param msg - сообщение до ввода в поток вывода
- */
 
     public:
-    void search_and_collect();
-    
-    void printAll();
 
+    void search_and_collect();
+    void printAll();
     void printStats();
-    PARSING(f_info * _INFO,
-            std::vector<std::string> _patterns);
-    ~PARSING (){
-        
-    }   
+
+    PARSING(const char* fpath,
+            std::vector<std::string> _patterns,
+            bool print_all_occurrences);
+    ~PARSING();
 };
 
 #endif
