@@ -12,8 +12,12 @@
 #endif
 
 HIDDEN void PARSING::search_and_collect(){
-    std::cout<< "___ PARSING: "<< INFO->_path<< " ____\n";
-    time_interval timer("search_and_collect: ");
+    std::string msg_log_write_file;
+    if (!write_log_file) [
+        std::cout<< "___ PARSING: "<< INFO->_path.string() << " ____\n";
+        time_interval timer("search_and_collect: " + );
+    ]
+    if (write_log_file && INFO.) 
 
     std::ifstream file(INFO->_path, std::ios::binary);
         
@@ -53,7 +57,6 @@ HIDDEN void PARSING::printAll() {
         }
     }
 }
-
 HIDDEN void PARSING::printStats() {
     auto pattern_iter = pattern_lists.cbegin();
     auto name_iter = _pattern_names.cbegin();
@@ -66,10 +69,11 @@ HIDDEN void PARSING::printStats() {
     ++name_iter;
     }
 }
-
+HIDDEN void 
 HIDDEN PARSING::PARSING(f_info * _INFO,
         std::vector<std::string> _patterns,
-        bool flag_print_all_info) 
+        bool flag_print_all_info, 
+        bool _write_log_file) 
 {
     if (_INFO == NULL ) {
         return;
@@ -78,6 +82,7 @@ HIDDEN PARSING::PARSING(f_info * _INFO,
     std::string _combined_pattern;
     pattern_lists.resize(_patterns.size());
     _pattern_names = _patterns;
+    write_log_file = _write_log_file;
 
     for (size_t i = 0; i < _patterns.size(); i++) {
         if (i > 0) _combined_pattern += "|";
@@ -92,14 +97,14 @@ HIDDEN PARSING::PARSING(f_info * _INFO,
 
 extern "C" {
 
-PARSING* create_parser(f_info* info, const char** patterns, int count, bool flag) {
+PARSING* create_parser(f_info* info, const char** patterns, int count, bool flag_all_info, bool write_info_file) {
     std::vector<std::string> pattern_vec;
     for (int i = 0; i < count; ++i) {
         if (patterns[i] != nullptr) {
             pattern_vec.push_back(patterns[i]);
         }
     }
-    return new PARSING(info, pattern_vec, flag);
+    return new PARSING(info, pattern_vec, flag_all_info, write_info_file);
 }
 
 void destroy_parser(PARSING* parser) {

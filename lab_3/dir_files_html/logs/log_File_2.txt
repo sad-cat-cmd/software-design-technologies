@@ -2,9 +2,9 @@ INFORMATION dir_files_html/File_2.html
 Size file (bytes):10485760
 
 
-dir_files_htmlhas already been created
+dir_files_html has already been created
 dir_files_html/File_2.html has been created
 
 ___ WRITE IN FILE: dir_files_html/File_2.html ____
-file already has target size: dir_files_html/File_2.html10485760 bytes
+ file already has target size: 10485760 bytes
 

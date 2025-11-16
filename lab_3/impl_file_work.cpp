@@ -9,16 +9,10 @@ int EXEP_work_file::getDataState() {return data_state;}
 std::string EXEP_work_file::getMessage() {return message;}
 
 void f_info::update_info() noexcept {
-    //std::cout <<"____ UPDATES F_INFO :/" << _path << "____\n";
-    //time_interval timer_f("f_info Updates: ");
     if (_size_bytes == std::filesystem::file_size(_path)) {
-        // std::cout<<"___________________________\n";
-        // print_info();
         return;
     }
     this->_size_bytes = std::filesystem::file_size(_path);
-    // std::cout<<"___________________________\n";
-    // print_info();
     return; 
 }
 std::string f_info::get_str_log_info(){
@@ -33,6 +27,9 @@ std::string f_info::get_str_log_info(){
 //     std::cout<<"___________________________\n";
 //     return;
 // }
+
+int f_info::get_flag_write_info() noexcept {return flag_write_info;}
+
 void f_info::write_info(std::string &msg) noexcept{
     if (flag_write_info == 0)
         return;
@@ -90,14 +87,14 @@ void write_buf_in_file(f_info * _info, std::string_view buffer, size_t target_si
     if (flag_saves_info)
         str_log_information += "___ WRITE IN FILE: " + _info->_path.string() +" ____\n";
     //std::cout<< "___ WRITE IN FILE: /"<< _info->_path<< " ____\n";
-    time_interval timer("write buffer in file: ");
+    //time_interval timer("write buffer in file: ");
     if (buffer.empty()){
         throw EXEP_work_file("buffer is empty", 0);
     }
     size_t current_size = std::filesystem::file_size(_info->_path);
     if (current_size == target_size) {
         if (flag_saves_info)
-            str_log_information += " file already has target size: " + " --- " +std::to_string(target_size) + " bytes\n";
+            str_log_information += " file already has target size: " +std::to_string(target_size) + " bytes\n";
         //std::cout << "write_buf_in_file() # file already has target size: " << target_size << " bytes\n";
         _info->update_info();
         _info->write_info(str_log_information);
@@ -148,19 +145,15 @@ f_info::f_info (std::filesystem::path _PATH, uint64_t _SB, int flag_log_file) no
     if (pos != std::string::npos) {
         path_log_file = _PATH.string().substr(0, pos);
         path_log_file = path_log_file / "logs";
-        std::cout<<path_log_file.string() << "\n";
     }
-
     if (!std::filesystem::exists(path_log_file)){
-        std::filesystem::create_directory(path_log_file);
-        std::cout << "create_directory: " << path_log_file.string() << "\n"; 
+        std::filesystem::create_directory(path_log_file); 
     }
     if (pos != std::string::npos){
         std::filesystem::path file_name = _PATH.string().substr(pos+1);
         size_t pos_2 = file_name.string().find_last_of(".");
         path_log_file = path_log_file.string() + "/log_" + file_name.string().substr(0 ,pos_2) +".txt";
     }
-    std::cout << path_log_file.string() << "\n";
     _path = _PATH;
     _size_bytes = _SB;
     flag_write_info = flag_log_file;
@@ -169,7 +162,6 @@ f_info::f_info (std::filesystem::path _PATH, uint64_t _SB, int flag_log_file) no
         if (file.is_open()){
             file << get_str_log_info() << std::endl;
             file.close();
-            std::cout<< path_log_file.string() << " create\n";
         } 
     }
 }
@@ -205,7 +197,6 @@ f_info*_create_file_in_dir (std::filesystem::path _dir,std::string_view _fname, 
     else {
         if (flag_saves_info) 
             str_log_information += _fpath.string() + " has been created"+"\n";
-        std::cout<< "The file has already been created: " << _fpath << " INFO UPDATES" << "\n";
         f_info* _info = new f_info(_fpath,std::filesystem::file_size(_fpath), flag_saves_info);
         _info->write_info(str_log_information);
         //_info->print_info();

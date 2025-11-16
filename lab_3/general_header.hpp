@@ -37,6 +37,7 @@ struct f_info
     //void print_info() noexcept;
     std::string get_str_log_info();
     void write_info(std::string &msg) noexcept;
+    int get_flag_write_info () noexcept;
 };
 
 std::string get_buffer_from_file(f_info * _info, int flag_saves_info);
@@ -45,9 +46,6 @@ void write_buf_in_file(f_info * _info,
                        std::string_view buffer,
                        size_t target_size,
                        int flag_saves_info);
-
-// uint64_t lines_count(std::filesystem::path _path,
-//                      uint64_t _size);
 
 f_info*_create_file_in_dir(std::filesystem::path _dir,
                            std::string_view _fname,
@@ -81,6 +79,7 @@ class PARSING{
     std::regex _combined_regex;
     std::vector<std::list<std::string>> pattern_lists;
     std::vector <std::string> _pattern_names;
+    bool write_log_file;
 
     public:
     void search_and_collect();
@@ -90,7 +89,8 @@ class PARSING{
     void printStats();
     PARSING(f_info * _INFO,
             std::vector<std::string> _patterns,
-            bool flag_print_all_info);
+            bool flag_print_all_info, 
+            bool _write_log_file);
     ~PARSING (){
         
     }   
