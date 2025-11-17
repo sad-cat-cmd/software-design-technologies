@@ -18,18 +18,32 @@ void f_info::update_info() noexcept {
 std::string f_info::get_str_log_info(){
     return "INFORMATION " + _path.string() + "\n" + "Size file (bytes):" + std::to_string(_size_bytes) + "\n" + log_inforamation + "\n";
 }
-// void f_info::print_info() noexcept {
-//     if (flag_write_info ==) {
-//     }
-//     std::cout << "___ PRINT_INFO "<< this->_path<< " ____\n";
-//     std::cout << "Size file (bytes): " << this->_size_bytes <<"\n";
-//     std::cout << log_inforamation << "\n";
-//     std::cout<<"___________________________\n";
-//     return;
-// }
+f_info::f_info (std::filesystem::path _PATH, uint64_t _SB, int flag_log_file) noexcept {
+    size_t pos = _PATH.string().find_last_of('/');
+    if (pos != std::string::npos) {
+        path_log_file = _PATH.string().substr(0, pos);
+        path_log_file = path_log_file / "logs";
+    }
+    if (!std::filesystem::exists(path_log_file)){
+        std::filesystem::create_directory(path_log_file); 
+    }
+    if (pos != std::string::npos){
+        std::filesystem::path file_name = _PATH.string().substr(pos+1);
+        size_t pos_2 = file_name.string().find_last_of(".");
+        path_log_file = path_log_file.string() + "/log_" + file_name.string().substr(0 ,pos_2) +".txt";
+    }
 
-int f_info::get_flag_write_info() noexcept {return flag_write_info;}
-
+    _path = _PATH;
+    _size_bytes = _SB;
+    flag_write_info = flag_log_file;
+    if (flag_write_info == 2) {
+        std::ofstream file(path_log_file);
+        if (file.is_open()){
+            file << get_str_log_info() << std::endl;
+            file.close();
+        } 
+    }
+}
 void f_info::write_info(std::string &msg) noexcept{
     if (flag_write_info == 0)
         return;
@@ -52,11 +66,11 @@ void f_info::write_log_info_in_file(){
 }
 
 std::string get_buffer_from_file(f_info * _info, int flag_saves_info){
+    time_interval_get timer("Timer getting buffer: ");
     std::string str_log_information;
     if (_info == NULL )
         throw EXEP_work_file("get_buffer_from_file() # file_ptr is NULL", 0);
     
-    time_interval timer("get_buffer_from_file: ");
     std::ifstream file(_info->_path, std::ios::binary);
 
     if (!file.is_open())
@@ -67,35 +81,34 @@ std::string get_buffer_from_file(f_info * _info, int flag_saves_info){
     file.seekg(0, std::ios::beg);
     file.read(buffer.data(), buffer.size());
     file.close();
-    if (flag_saves_info)
+    if (flag_saves_info){
         str_log_information += 
             "\n___________________________\n"
             "GET BUFFER FROM FILE: " + 
             _info->_path.string() + 
             "\n SIZE: " + 
             std::to_string(buffer.size()) + 
-            "\n___________________________\n";
-            _info->write_info(str_log_information);
+            "\n___________________________\n" +
+            timer.get_str_time_interval();
+        _info->write_info(str_log_information);
+    }
     return buffer;
 }
-
 void write_buf_in_file(f_info * _info, std::string_view buffer, size_t target_size, int flag_saves_info){
+    time_interval_get timer("Time writing: ");
     std::string str_log_information;
     if (_info == NULL) {
         throw EXEP_work_file("write_buf_in_file() # file_ptr is NULL", 0);
     }
     if (flag_saves_info)
         str_log_information += "___ WRITE IN FILE: " + _info->_path.string() +" ____\n";
-    //std::cout<< "___ WRITE IN FILE: /"<< _info->_path<< " ____\n";
-    //time_interval timer("write buffer in file: ");
     if (buffer.empty()){
         throw EXEP_work_file("buffer is empty", 0);
     }
     size_t current_size = std::filesystem::file_size(_info->_path);
     if (current_size == target_size) {
         if (flag_saves_info)
-            str_log_information += " file already has target size: " +std::to_string(target_size) + " bytes\n";
-        //std::cout << "write_buf_in_file() # file already has target size: " << target_size << " bytes\n";
+            str_log_information += " file already has target size: " +std::to_string(target_size) + " bytes\n" + timer.get_str_time_interval();
         _info->update_info();
         _info->write_info(str_log_information);
         return;
@@ -111,8 +124,7 @@ void write_buf_in_file(f_info * _info, std::string_view buffer, size_t target_si
         file.close();
         std::filesystem::resize_file(_info->_path, target_size);
         if (flag_saves_info) 
-            str_log_information += "File truncated to: " + std::to_string(target_size) + " bytes\n";
-        //std::cout << "File truncated to: " << target_size << " bytes\n";
+            str_log_information += "File truncated to: " + std::to_string(target_size) + " bytes\n" + timer.get_str_time_interval();
         _info->update_info();
         _info->write_info(str_log_information);
         
@@ -130,45 +142,17 @@ void write_buf_in_file(f_info * _info, std::string_view buffer, size_t target_si
             throw EXEP_work_file("write_buf_in_file() # error write in file", 0);
         }
     }
-    str_log_information += "Recorded: " + std::to_string(total_written) + " BYTES\n" + "Recording is over. UPDATES INFO\n";
-    // std::cout << "Recorded: " << total_written << " BYTES\n";
-    // std::cout << "Recording is over. UPDATES INFO\n";
     file.close();
+    str_log_information += "Recorded: " + std::to_string(total_written) + " BYTES\n" + "Recording is over. UPDATES INFO\n" + timer.get_str_time_interval();
     _info->update_info();
     _info->write_info(str_log_information);
-    //std::cout<<"___________________________\n";
     return;
 }
-
-f_info::f_info (std::filesystem::path _PATH, uint64_t _SB, int flag_log_file) noexcept {
-    size_t pos = _PATH.string().find_last_of('/');
-    if (pos != std::string::npos) {
-        path_log_file = _PATH.string().substr(0, pos);
-        path_log_file = path_log_file / "logs";
-    }
-    if (!std::filesystem::exists(path_log_file)){
-        std::filesystem::create_directory(path_log_file); 
-    }
-    if (pos != std::string::npos){
-        std::filesystem::path file_name = _PATH.string().substr(pos+1);
-        size_t pos_2 = file_name.string().find_last_of(".");
-        path_log_file = path_log_file.string() + "/log_" + file_name.string().substr(0 ,pos_2) +".txt";
-    }
-    _path = _PATH;
-    _size_bytes = _SB;
-    flag_write_info = flag_log_file;
-    if (flag_write_info == 2) {
-        std::ofstream file(path_log_file);
-        if (file.is_open()){
-            file << get_str_log_info() << std::endl;
-            file.close();
-        } 
-    }
-}
 f_info*_create_file_in_dir (std::filesystem::path _dir,std::string_view _fname, int flag_saves_info) {
+    time_interval_get timer("Time creating: ");
     if (flag_saves_info != 1 && flag_saves_info != 2 && flag_saves_info != 0)
         throw EXEP_work_file("_create_file_in_dir() # invalid flag_saves_info: " + std::to_string(flag_saves_info) + " for " + (_dir/_fname).string(), 1);
-    //time_interval _timer_fcreate ("\t FILE and DIR CREATING : " + _dir.string() + "/" + _fname);
+    
     std::string str_log_information;
     if (!std::filesystem::exists(_dir)){
         std::filesystem::create_directory(_dir);
@@ -187,7 +171,7 @@ f_info*_create_file_in_dir (std::filesystem::path _dir,std::string_view _fname, 
             throw EXEP_work_file("_create_file_in_dir() # file is not open: " + _fpath.string(), 1);
         else {
             if (flag_saves_info) 
-                str_log_information += _fpath.string() + " has been created"+"\n";
+                str_log_information += _fpath.string() + " has been created"+"\n" + timer.get_str_time_interval();
             _file.close();
             f_info * _info = new f_info(_fpath, 0, flag_saves_info);
             _info->write_info(str_log_information);
@@ -196,13 +180,13 @@ f_info*_create_file_in_dir (std::filesystem::path _dir,std::string_view _fname, 
     }
     else {
         if (flag_saves_info) 
-            str_log_information += _fpath.string() + " has been created"+"\n";
+            str_log_information += _fpath.string() + " has been created"+"\n" + timer.get_str_time_interval();
         f_info* _info = new f_info(_fpath,std::filesystem::file_size(_fpath), flag_saves_info);
         _info->write_info(str_log_information);
-        //_info->print_info();
         return _info;
     }
 }
+
 std::string time_interval::calculating_diff_time() noexcept{
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (end - _start);
@@ -231,9 +215,8 @@ std::string time_interval::calculating_diff_time() noexcept{
     }
 }
 void time_interval::output_result(const std::string& value_time) noexcept{
-    std::cout <<"\n"<< _message << " "<< value_time << "\n\n";
+    std::cout <<"\n"<< _message << " "<< value_time << "\n";
 }
-
 time_interval::time_interval(std::string message) noexcept {
         _start = std::chrono::high_resolution_clock::now();
         _message = message;
@@ -256,6 +239,36 @@ time_interval_log_file::time_interval_log_file(
     std::filesystem::path path_log_file
 ) noexcept : time_interval(std::move(message)), _path_log_file(std::move(path_log_file)){}
 
+time_interval_get::time_interval_get(std::string message) noexcept : mes(std::move(message)),
+                             _start(std::move(std::chrono::high_resolution_clock::now()))
+{}
+std::string time_interval_get:: get_str_time_interval() noexcept{
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (end - _start);
+    if (duration < std::chrono::nanoseconds(1)) {
+        return mes + "  0ns\n";
+    }
+    else if (duration < std::chrono::microseconds(1)) {
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+        return mes + " " + std::to_string(ns.count()) + " ns\n";
+    }
+    else if (duration < std::chrono::milliseconds(1)) {
+        auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+        return mes + " " + std::to_string(us.count()) + " mks\n";
+    }
+    else if (duration < std::chrono::seconds(1)) {
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        return mes + " " + std::to_string(ms.count()) + " ms\n";
+    }
+    else if (duration < std::chrono::minutes(1)) {
+        auto s = std::chrono::duration_cast<std::chrono::seconds>(duration);
+        return mes + " " + std::to_string(s.count()) + " s\n";
+    }
+    else {
+        auto min = std::chrono::duration_cast<std::chrono::minutes>(duration);
+        return mes + " " + std::to_string(min.count()) + " min\n";
+    }
+}
 std::string set_string_path(std::string_view msg){
     #ifdef _WIN32
         static const std::regex invalid_chars_regex("[<>:\"|?*]");

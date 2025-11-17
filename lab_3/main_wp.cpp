@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 
-typedef PARSING* (*create_parser_t)(f_info*, const char**, int, bool);
+typedef PARSING* (*create_parser_t)(f_info*, const char**, int, bool, bool);
 typedef void (*destroy_parser_t)(PARSING*);
 create_parser_t create_parser;
 destroy_parser_t destroy_parser;
@@ -15,10 +15,10 @@ void init_vec_f_info(std::vector<f_info*> &vec_f_info);
 void multy_buf_in_file();
 void complex_init_global_value();
 
+void* handle {NULL};
 std::string based_dir_name = "dir_files_html";
 std::string buffer_name = "test.html";
-void* handle {NULL};
-std::vector<std::string> vec_str_regex;
+// std::vector<std::string> vec_str_regex;
 std::vector<std::string> vec_str_name;
 std::vector<f_info*> vec_f_info;
 size_t count_files = 5;
@@ -29,6 +29,9 @@ const char* patterns[] = {
 };
 int patterns_count = 3;
 bool print_all_flag = false;
+bool write_log_file_flag = true;
+std::vector<long long> vec_target_size {1024*1024, 1024*1024 * 50,  1024*1024 *10, 1024*1024* 11,  1024*1024* 20};
+
 int main() {
     time_interval timer("FUNCTION MAIN: ");
         std::cout << "C++ standart: " << __cplusplus << "\n"<< std::endl;
@@ -40,10 +43,9 @@ int main() {
     time_interval timer_parsing("Multi_Parsing: ");
     for (size_t i = 0; i < count_files; i++)
     {
-        PARSING* parser = create_parser(vec_f_info[i], patterns, patterns_count, print_all_flag);
-        if (!parser){
+        PARSING* parser = create_parser(vec_f_info[i], patterns, patterns_count, print_all_flag, write_log_file_flag);
+        if (!parser)
             return 1;
-        }
         destroy_parser(parser);
     }
     return 0;
@@ -95,6 +97,8 @@ void verifying_correctness_names(std::vector<std::string> &vec_str_name) noexcep
         }
     }
 }
+
+
 void init_vec_f_info(std::vector<f_info*> &vec_f_info){
     vec_f_info.resize(count_files+1, NULL);
     try {vec_f_info[count_files] = _create_file_in_dir(based_dir_name, buffer_name, 2);}
@@ -105,12 +109,12 @@ void init_vec_f_info(std::vector<f_info*> &vec_f_info){
     }
 }
 void multy_buf_in_file(){
-    time_interval time_writing("TIME WRITING: ");
+    time_interval time_writing("TIME MULTY BUFFER WRITING: ");
     std::string buffer;
     try {buffer = get_buffer_from_file(vec_f_info[count_files], 2);}
     catch(EXEP_work_file &ex) {throw EXEP_work_file("multy_buf_in_file() # " + ex.getMessage(), ex.getDataState());}
     for (size_t i = 0; i< count_files; i++){
-        try{write_buf_in_file(vec_f_info[i],buffer, 10*1024*1024, 2);}
+        try{write_buf_in_file(vec_f_info[i],buffer, vec_target_size[i], 2);}
         catch(EXEP_work_file &ex) {throw EXEP_work_file("multy_buf_in_file() # " + ex.getMessage(), ex.getDataState());}
     }
 }
@@ -119,6 +123,7 @@ void complex_init_global_value(){
         handle = open_lib_init_names();
         write_file_names(vec_str_name);
         verifying_correctness_names(vec_str_name);
+        time_interval timer_work_file("Time work files");
         init_vec_f_info(vec_f_info);
         multy_buf_in_file();
     }

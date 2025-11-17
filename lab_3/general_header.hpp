@@ -19,26 +19,24 @@ class EXEP_work_file : public std::exception {
     std::string getMessage();
 };
 
-//uint64_t lines_count(std::filesystem::path _path, uint64_t _size);
-
 struct f_info
 {   
     private:
-    int flag_write_info;
-    std::filesystem::path path_log_file;
     void write_log_info_in_file();
-    public:
     std::string log_inforamation;
+    public:
     std::filesystem::path _path;
     uint64_t _size_bytes;
-    
+    int flag_write_info;
+    std::filesystem::path path_log_file;
+
     f_info (std::filesystem::path _PATH, uint64_t _SB, int flag_log_file) noexcept;
     void update_info() noexcept;
-    //void print_info() noexcept;
     std::string get_str_log_info();
     void write_info(std::string &msg) noexcept;
-    int get_flag_write_info () noexcept;
 };
+
+std::string set_string_path(std::string_view msg);
 
 std::string get_buffer_from_file(f_info * _info, int flag_saves_info);
 
@@ -67,11 +65,20 @@ private:
     std::filesystem::path _path_log_file;
     virtual void output_result(const std::string& value_time) noexcept override;
 public:
-    time_interval_log_file(std::string message, std::filesystem::path path_log_file) noexcept;
+    time_interval_log_file(std::string message, std::filesystem::path path_log_file ) noexcept;
 };
 
-std::string set_string_path(std::string_view msg);
+class time_interval_get{
+    private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start;
+    std::string mes;
 
+    public:
+    time_interval_get(std::string message = "") noexcept;
+    std::string get_str_time_interval () noexcept;
+    ~time_interval_get() noexcept{}
+
+};
 
 class PARSING{
     private:
@@ -85,8 +92,9 @@ class PARSING{
     void search_and_collect();
     
     void printAll();
-
     void printStats();
+    void write_all_stats_file();
+    void write_stats_file();
     PARSING(f_info * _INFO,
             std::vector<std::string> _patterns,
             bool flag_print_all_info, 

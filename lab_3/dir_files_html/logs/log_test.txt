@@ -1,13 +1,15 @@
 INFORMATION dir_files_html/test.html
-Size file (bytes):754
+Size file (bytes):20971520
 
 
 dir_files_html has already been created
 dir_files_html/test.html has been created
+Time creating:   0ns
 
 
 ___________________________
 GET BUFFER FROM FILE: dir_files_html/test.html
- SIZE: 754
+ SIZE: 20971520
 ___________________________
+Timer getting buffer:  12 ms
 

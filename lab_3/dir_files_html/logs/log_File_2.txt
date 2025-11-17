@@ -1,10 +1,22 @@
 INFORMATION dir_files_html/File_2.html
-Size file (bytes):10485760
+Size file (bytes):0
 
 
 dir_files_html has already been created
 dir_files_html/File_2.html has been created
+Time creating:   0ns
 
 ___ WRITE IN FILE: dir_files_html/File_2.html ____
- file already has target size: 10485760 bytes
+Recorded: 52428800 BYTES
+Recording is over. UPDATES INFO
+Time writing:  14 ms
+
+PARSING:  dir_files_html/File_2.html
+number of bytes parsed:  52428800
+number of occurrences: 417175
+Time run:  12 s
+
+PATTERN <h[1-6][^>]*>.*?</h[1-6]>: 278125 occurrences
+PATTERN <p[^>]*>.*?</p>: 69525 occurrences
+PATTERN <b[^>]*>.*?</b>: 69525 occurrences
 
